@@ -1,0 +1,46 @@
+<div class="um-root">
+
+  <!-- ✅ COMMON STATS -->
+ <section class="um-stats-section">
+    <div class="um-stat-card" *ngFor="let stat of stats; trackBy: trackByStat">
+      <div class="um-stat-info">
+        <span class="um-stat-label">{{ stat.label }}</span>
+        <div class="um-stat-value-row">
+          <!-- <span class="um-stat-value">{{ stat.value }}</span> -->
+
+
+
+          <span class="um-stat-value">
+  {{ stat.value !== null && stat.value !== undefined ? stat.value : '...' }}
+</span>
+          <span class="um-stat-subtitle">{{ stat.subtitle }}</span>
+        </div>
+      </div>
+      <div class="um-stat-icon-wrapper">
+        <i class="pi" [ngClass]="stat.icon"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ COMMON TABS -->
+  <div class="um-tabs-wrapper">
+    <p-tabView [activeIndex]="activeTabIndex" class="um-tabs-modern">
+
+      <p-tabPanel *ngFor="let tab of tabs; let i = index">
+        <ng-template pTemplate="header">
+       <div class="um-tab"
+     [class.active]="activeTabIndex === i"
+     (click)="go(tab.route)">
+  <i class="pi" [ngClass]="tab.icon"></i>
+  <span>{{ tab.label }}</span>
+</div>
+        </ng-template>
+      </p-tabPanel>
+
+    </p-tabView>
+  </div>
+
+  <!-- CHILD ROUTES -->
+  <router-outlet></router-outlet>
+
+</div>

@@ -1,0 +1,51 @@
+<div class="sidebar-backdrop" [class.visible]="!isCollapsed && isMobile" (click)="closeSidebar()">
+</div>
+
+<div class="sidebar" [class.collapsed]="isCollapsed">
+
+    <!-- LOGO -->
+    <div class="logo">
+        <div class="logo-image">
+            <img src="assets/logo.jpg" alt="VISIPACK Logo">
+        </div>
+
+        <div class="logo-text" *ngIf="!isCollapsed">
+            <h4>DEVELOPER AI </h4>
+            <span></span>
+        </div>
+    </div>
+
+    <!-- SCROLLABLE MENU -->
+    <div class="menu-container">
+        <div class="menu">
+
+            <!-- OVERVIEW / WMS MODULES -->
+            <p class="menu-title">OVERVIEW</p>
+            <div class="menu-group">
+
+                <a routerLink="/dashboard" routerLinkActive="active" (click)="onNavClick()">
+                    <i class="pi pi-chart-bar"></i>
+                    <span class="menu-text">Dasboard</span>
+                </a>
+
+                <a routerLink="/developerai" routerLinkActive="active" (click)="onNavClick()">
+                    <i class="pi pi-chart-bar"></i>
+                    <span class="menu-text">Developer AI</span>
+                </a>
+
+
+
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM SECTION -->
+    <div class="app-sidebar-bottom" *ngIf="!isCollapsed">
+        <div class="app-sidebar-version">
+           
+        </div>
+    </div>
+
+</div>

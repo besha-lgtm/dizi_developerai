@@ -1,0 +1,19 @@
+
+
+<div class="layout-container">
+
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Section -->
+  <div class="main-section">
+
+   <app-header (addNewClicked)="handleAddNew()"></app-header>
+
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,69 @@
+<div class="header">
+
+  <div class="left">
+
+    <!-- TOGGLE -->
+    <div class="toggle" (click)="toggleSidebar()" title="Toggle Sidebar">
+      <i class="pi pi-bars"></i>
+    </div>
+
+    <!-- DYNAMIC BREADCRUMB -->
+    <nav class="breadcrumb" aria-label="breadcrumb">
+      <ng-container *ngFor="let crumb of (headerConfig$ | async)?.breadcrumbs; let last = last; let i = index">
+        <a 
+          *ngIf="!last && crumb.routerLink" 
+          [routerLink]="crumb.routerLink" 
+          class="breadcrumb-link">
+          {{ crumb.label }}
+        </a>
+        <span 
+          *ngIf="!last && !crumb.routerLink" 
+          class="breadcrumb-link muted">
+          {{ crumb.label }}
+        </span>
+        <span *ngIf="!last" class="breadcrumb-sep">/</span>
+        <b *ngIf="last">{{ crumb.label }}</b>
+      </ng-container>
+    </nav>
+
+  </div>
+
+  <div class="right">
+
+    <!-- SEARCH -->
+    <!-- <div class="search">
+      <i class="pi pi-search"></i>
+      <input placeholder="Search projects, users, modules." />
+    </div> -->
+
+    <!-- FILTER (conditional) -->
+    <button 
+      class="btn light" 
+      *ngIf="(headerConfig$ | async)?.showFilter">
+      <i class="pi pi-filter"></i>
+      <span class="btn-label">Filter</span>
+    </button>
+
+    <!-- ADD (conditional, dynamic label) -->
+    <button 
+      class="btn primary"
+      *ngIf="(headerConfig$ | async)?.showAddButton"
+      (click)="onAddNew()">
+      {{ (headerConfig$ | async)?.addButtonLabel || '+ Add New' }}
+    </button>
+
+    <!-- USER PROFILE SECTION -->
+    <div class="user-profile">
+      <div class="profile-info">
+        <span class="role-label">User</span>
+        <span class="user-name">Raju</span>
+      </div>
+      <div class="profile-avatar">R</div>
+      <div class="logout-btn" title="Logout" (click)="logout()">
+        <i class="pi pi-power-off"></i>
+      </div>
+    </div>
+
+  </div>
+
+</div>

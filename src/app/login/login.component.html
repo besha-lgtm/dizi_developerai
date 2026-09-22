@@ -1,0 +1,39 @@
+<!-- Login component -->
+
+<div class="login-container">
+  <div class="login-card">
+
+    <div class="login-header">
+      <div class="logo-icon">DI</div>
+      <h2>Dizi Intelligence</h2>
+      <p>Please login to continue</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" placeholder="Enter your email" />
+        <small *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Valid email required
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" formControlName="password" placeholder="Enter your password" />
+        <small *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Password is required
+        </small>
+      </div>
+
+      <button type="submit" class="login-btn" [disabled]="loading">
+        {{ loading ? 'Logging in...' : 'Login' }}
+      </button>
+
+      <p class="error" *ngIf="errorMsg">{{ errorMsg }}</p>
+
+    </form>
+
+  </div>
+</div>
