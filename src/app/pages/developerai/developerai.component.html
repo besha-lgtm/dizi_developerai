@@ -12,3 +12,103 @@
     </div>
 
 </div>
+
+<!-- Floating Action Button -->
+<div class="ai-fab" *ngIf="!isChatOpen" (click)="toggleChat()">
+  <i class="pi pi-sparkles"></i>
+</div>
+
+<!-- Chat Interface Overlay -->
+<div class="chat-overlay" [class.open]="isChatOpen">
+  
+  <!-- Sidebar -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn">
+        <i class="pi pi-plus"></i> New Chat
+      </button>
+      <button class="close-chat-btn" (click)="toggleChat()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    
+    <div class="sidebar-content">
+      <div class="history-group">
+        <p class="history-title">Recent</p>
+        <ul class="history-list">
+          <li *ngFor="let chat of chatHistory">
+            <i class="pi pi-comment"></i>
+            <span>{{ chat.title }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="chat-main">
+    
+    <!-- Messages Area -->
+    <div class="chat-messages">
+      
+      <!-- Welcome State -->
+      <div class="welcome-state" *ngIf="messages.length === 1">
+        <div class="welcome-logo">
+          <i class="pi pi-sparkles"></i>
+        </div>
+      </div>
+      <div class="message-wrapper" *ngFor="let msg of messages" [ngClass]="msg.sender">
+        <div class="avatar" *ngIf="msg.sender === 'ai'">
+          <i class="pi pi-sparkles"></i>
+        </div>
+        <div class="message-content">
+          <div class="message-text">{{ msg.text }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-container">
+      <div class="input-wrapper">
+        <button class="icon-btn" title="Upload Media">
+          <i class="pi pi-plus"></i>
+        </button>
+        
+        <!-- Model Selector inside Input -->
+        <div class="input-model-selector" (click)="toggleModelDropdown()">
+          <span class="input-selected-model">{{ selectedModel }} <i class="pi pi-chevron-up"></i></span>
+          
+          <div class="input-model-dropdown" *ngIf="isModelDropdownOpen" (click)="$event.stopPropagation()">
+            <div class="dropdown-header">Model</div>
+            <div class="model-option" *ngFor="let model of models" 
+                 [class.active]="model === selectedModel"
+                 (click)="selectModel(model)">
+              <span>{{ model }}</span>
+              <div class="model-badges">
+                <span class="badge" *ngIf="model.includes('Flash')">Fast <i class="pi pi-info-circle"></i></span>
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <input type="text" 
+               placeholder="Message Developer AI..." 
+               [value]="userInput" 
+               (input)="userInput = $any($event.target).value"
+               (keydown.enter)="sendMessage()">
+        <button class="icon-btn" title="Use Microphone">
+          <i class="pi pi-microphone"></i>
+        </button>
+        <button class="send-btn" [disabled]="!userInput.trim()" (click)="sendMessage()">
+          <i class="pi pi-send"></i>
+        </button>
+      </div>
+      <div class="disclaimer">
+        Developer AI can make mistakes. Consider verifying important information.
+      </div>
+    </div>
+
+  </div>
+
+</div>
