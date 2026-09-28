@@ -45,6 +45,8 @@ export class HeaderService {
 
     if (url.includes('dashboard')) {
       breadcrumbs.push({ label: 'Dashboard' });
+    } else if (url.includes('developerai')) {
+      breadcrumbs.push({ label: 'Developer AI' });
     } else if (url.includes('poqr')) {
       breadcrumbs.push({ label: 'PO QR' });
     } else if (url.includes('porecieve')) {

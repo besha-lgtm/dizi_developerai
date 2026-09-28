@@ -7,15 +7,21 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { DeveloperaiComponent } from './pages/developerai/developerai.component';
 
 const routes: Routes = [
-  // Redirect to login
+  // Redirect root to dashboard
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-  // Login layout
+  // Login (standalone, no layout)
   { path: 'login', component: LoginComponent },
 
-  {path: 'developerai', component: DeveloperaiComponent},
-
-  {path : 'dashboard', component: DashboardComponent}
+  // Main layout shell with child routes
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'developerai', component: DeveloperaiComponent },
+    ]
+  }
 ];
 
 @NgModule({

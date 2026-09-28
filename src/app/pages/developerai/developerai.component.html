@@ -1,14 +1,105 @@
+<div class="chat-container">
 
-<div class="layout">
-
-    <app-sidebar></app-sidebar>
-
-    <div class="right-section">
-
-        <app-header></app-header>
-
-        <router-outlet></router-outlet>
-
+  <!-- CHAT HEADER -->
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <div class="chat-avatar">
+        <i class="pi pi-code"></i>
+      </div>
+      <div>
+        <h3>Developer AI</h3>
+        <span class="chat-status">
+          <span class="status-dot" [class.loading]="isLoading"></span>
+          {{ isLoading ? 'Thinking...' : 'Ready' }}
+        </span>
+      </div>
     </div>
+  </div>
+
+  <!-- MESSAGES AREA -->
+  <div class="chat-messages">
+
+    <!-- WELCOME STATE (shown when no messages yet) -->
+    <div class="chat-welcome" *ngIf="messages.length === 0 && !isLoading">
+      <div class="welcome-icon">
+        <i class="pi pi-code"></i>
+      </div>
+      <h4>How can I help you code today?</h4>
+      <p>Describe your coding requirement and I'll provide a complete solution with explanation.</p>
+      <div class="suggestion-chips">
+        <button class="chip" (click)="userInput = 'Give me Python code to reverse a linked list'">
+          Python: Reverse a linked list
+        </button>
+        <button class="chip" (click)="userInput = 'Create a Java program to check if a number is prime'">
+          Java: Prime number check
+        </button>
+        <button class="chip" (click)="userInput = 'Explain binary search in simple terms'">
+          Explain binary search
+        </button>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <ng-container *ngFor="let msg of messages">
+
+      <!-- USER MESSAGE -->
+      <div class="message-row user-row" *ngIf="msg.role === 'user'">
+        <div class="message user-message">
+          <p>{{ msg.content }}</p>
+        </div>
+        <div class="message-avatar user-avatar">U</div>
+      </div>
+
+      <!-- ASSISTANT MESSAGE -->
+      <div class="message-row assistant-row" *ngIf="msg.role === 'assistant'">
+        <div class="message-avatar ai-avatar">
+          <i class="pi pi-code"></i>
+        </div>
+        <div class="message assistant-message">
+          <pre class="ai-response-text">{{ msg.content }}</pre>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- LOADING INDICATOR -->
+    <div class="message-row assistant-row" *ngIf="isLoading">
+      <div class="message-avatar ai-avatar">
+        <i class="pi pi-code"></i>
+      </div>
+      <div class="message assistant-message loading-message">
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span class="loading-label">AI is thinking...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INPUT AREA -->
+  <div class="chat-input-area">
+    <div class="input-wrapper">
+      <textarea
+        class="chat-input"
+        [(ngModel)]="userInput"
+        (keydown)="handleKeydown($event)"
+        placeholder="Describe your coding requirement... (Enter to send, Shift+Enter for new line)"
+        rows="1"
+        [disabled]="isLoading"
+      ></textarea>
+      <button
+        class="send-btn"
+        (click)="sendMessage()"
+        [disabled]="!userInput.trim() || isLoading"
+        title="Send"
+      >
+        <i class="pi pi-send"></i>
+      </button>
+    </div>
+    <p class="input-hint">Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</p>
+  </div>
 
 </div>
