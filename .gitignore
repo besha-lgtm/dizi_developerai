@@ -28,7 +28,7 @@ __pycache__/
 # ==============================================
 
 # Dependencies (huge folder, auto-installed)
-node_modules/
+# node_modules/
 
 # Angular build output
 dist/
