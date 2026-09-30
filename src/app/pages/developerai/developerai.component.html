@@ -1,105 +1,184 @@
-<div class="chat-container">
+<div class="developerai-wrapper">
 
-  <!-- CHAT HEADER -->
-  <div class="chat-header">
-    <div class="chat-header-info">
-      <div class="chat-avatar">
-        <i class="pi pi-code"></i>
+  <!-- CONVERSATION SESSIONS SIDEBAR -->
+  <aside class="sessions-sidebar" [class.collapsed]="!isHistorySidebarOpen">
+    <div class="sessions-header">
+      <div class="sessions-header-title">
+        <i class="pi pi-comments"></i>
+        <span>Conversations</span>
       </div>
-      <div>
-        <h3>Developer AI</h3>
-        <span class="chat-status">
-          <span class="status-dot" [class.loading]="isLoading"></span>
-          {{ isLoading ? 'Thinking...' : 'Ready' }}
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- MESSAGES AREA -->
-  <div class="chat-messages">
-
-    <!-- WELCOME STATE (shown when no messages yet) -->
-    <div class="chat-welcome" *ngIf="messages.length === 0 && !isLoading">
-      <div class="welcome-icon">
-        <i class="pi pi-code"></i>
-      </div>
-      <h4>How can I help you code today?</h4>
-      <p>Describe your coding requirement and I'll provide a complete solution with explanation.</p>
-      <div class="suggestion-chips">
-        <button class="chip" (click)="userInput = 'Give me Python code to reverse a linked list'">
-          Python: Reverse a linked list
-        </button>
-        <button class="chip" (click)="userInput = 'Create a Java program to check if a number is prime'">
-          Java: Prime number check
-        </button>
-        <button class="chip" (click)="userInput = 'Explain binary search in simple terms'">
-          Explain binary search
-        </button>
-      </div>
+      <button class="new-chat-btn" (click)="startNewChat()" title="Start New Conversation">
+        <i class="pi pi-plus"></i>
+        <span>New Chat</span>
+      </button>
     </div>
 
-    <!-- MESSAGES -->
-    <ng-container *ngFor="let msg of messages">
+    <!-- SESSIONS LIST -->
+    <div class="sessions-list">
+      <div *ngIf="isSessionsLoading" class="sessions-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading history...</span>
+      </div>
 
-      <!-- USER MESSAGE -->
-      <div class="message-row user-row" *ngIf="msg.role === 'user'">
-        <div class="message user-message">
-          <p>{{ msg.content }}</p>
+      <div *ngIf="!isSessionsLoading && sessions.length === 0" class="sessions-empty">
+        <i class="pi pi-inbox"></i>
+        <p>No conversations yet</p>
+        <small>Your chat history will appear here</small>
+      </div>
+
+      <div 
+        *ngFor="let s of sessions"
+        class="session-item"
+        [class.active]="s.id === activeSessionId"
+        (click)="selectSession(s.id)"
+      >
+        <div class="session-item-icon">
+          <i class="pi pi-comment"></i>
         </div>
-        <div class="message-avatar user-avatar">U</div>
+        <div class="session-item-content">
+          <div class="session-item-title" [title]="s.title">{{ s.title }}</div>
+          <div class="session-item-meta">
+            <span>{{ s.message_count || (s.messages ? s.messages.length : 0) }} msgs</span>
+            <span *ngIf="s.token_usage?.total_tokens" class="session-token-tag">
+              {{ s.token_usage?.total_tokens }} tokens
+            </span>
+          </div>
+        </div>
+        <button 
+          class="session-delete-btn" 
+          (click)="deleteSession(s.id, $event)" 
+          title="Delete Conversation"
+        >
+          <i class="pi pi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT CONTAINER -->
+  <main class="chat-container">
+
+    <!-- CHAT HEADER -->
+    <header class="chat-header">
+      <div class="chat-header-info">
+        <button 
+          class="history-toggle-btn" 
+          (click)="toggleHistorySidebar()" 
+          [title]="isHistorySidebarOpen ? 'Hide History' : 'Show History'"
+        >
+          <i class="pi" [ngClass]="isHistorySidebarOpen ? 'pi-chevron-left' : 'pi-bars'"></i>
+        </button>
+
+        <div class="chat-avatar">
+          <i class="pi pi-code"></i>
+        </div>
+
+        <div class="chat-title-group">
+          <h3>{{ activeSession?.title || 'New Conversation' }}</h3>
+          <span class="chat-status">
+            <span class="status-dot" [class.loading]="isLoading"></span>
+            {{ isLoading ? 'Thinking...' : (activeSessionId ? 'Session Active' : 'Ready') }}
+            <span *ngIf="activeSession?.token_usage?.total_tokens" class="header-token-badge">
+              <i class="pi pi-bolt"></i> {{ activeSession?.token_usage?.total_tokens }} tokens
+            </span>
+          </span>
+        </div>
       </div>
 
-      <!-- ASSISTANT MESSAGE -->
-      <div class="message-row assistant-row" *ngIf="msg.role === 'assistant'">
+      <div class="chat-header-actions">
+        <button class="header-new-btn" (click)="startNewChat()" title="Start New Chat">
+          <i class="pi pi-plus"></i>
+          <span class="btn-text">New Chat</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MESSAGES AREA -->
+    <div class="chat-messages">
+
+      <!-- WELCOME STATE (shown when no messages in active session) -->
+      <div class="chat-welcome" *ngIf="messages.length === 0 && !isLoading">
+        <div class="welcome-icon">
+          <i class="pi pi-code"></i>
+        </div>
+        <h4>How can I help you code today?</h4>
+        <p>Describe your coding requirement and I'll provide a complete solution with explanation.</p>
+        <div class="suggestion-chips">
+          <button class="chip" (click)="userInput = 'Give me Python code to reverse a linked list'">
+            Python: Reverse a linked list
+          </button>
+          <button class="chip" (click)="userInput = 'Create a Java program to check if a number is prime'">
+            Java: Prime number check
+          </button>
+          <button class="chip" (click)="userInput = 'Explain binary search in simple terms'">
+            Explain binary search
+          </button>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <ng-container *ngFor="let msg of messages">
+
+        <!-- USER MESSAGE -->
+        <div class="message-row user-row" *ngIf="msg.role === 'user'">
+          <div class="message user-message">
+            <p>{{ msg.content }}</p>
+          </div>
+          <div class="message-avatar user-avatar">U</div>
+        </div>
+
+        <!-- ASSISTANT MESSAGE -->
+        <div class="message-row assistant-row" *ngIf="msg.role === 'assistant'">
+          <div class="message-avatar ai-avatar">
+            <i class="pi pi-code"></i>
+          </div>
+          <div class="message assistant-message">
+            <pre class="ai-response-text">{{ msg.content }}</pre>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <!-- LOADING INDICATOR -->
+      <div class="message-row assistant-row" *ngIf="isLoading">
         <div class="message-avatar ai-avatar">
           <i class="pi pi-code"></i>
         </div>
-        <div class="message assistant-message">
-          <pre class="ai-response-text">{{ msg.content }}</pre>
+        <div class="message assistant-message loading-message">
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span class="loading-label">AI is thinking...</span>
         </div>
       </div>
 
-    </ng-container>
-
-    <!-- LOADING INDICATOR -->
-    <div class="message-row assistant-row" *ngIf="isLoading">
-      <div class="message-avatar ai-avatar">
-        <i class="pi pi-code"></i>
-      </div>
-      <div class="message assistant-message loading-message">
-        <div class="typing-dots">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <span class="loading-label">AI is thinking...</span>
-      </div>
     </div>
 
-  </div>
-
-  <!-- INPUT AREA -->
-  <div class="chat-input-area">
-    <div class="input-wrapper">
-      <textarea
-        class="chat-input"
-        [(ngModel)]="userInput"
-        (keydown)="handleKeydown($event)"
-        placeholder="Describe your coding requirement... (Enter to send, Shift+Enter for new line)"
-        rows="1"
-        [disabled]="isLoading"
-      ></textarea>
-      <button
-        class="send-btn"
-        (click)="sendMessage()"
-        [disabled]="!userInput.trim() || isLoading"
-        title="Send"
-      >
-        <i class="pi pi-send"></i>
-      </button>
+    <!-- INPUT AREA -->
+    <div class="chat-input-area">
+      <div class="input-wrapper">
+        <textarea
+          class="chat-input"
+          [(ngModel)]="userInput"
+          (keydown)="handleKeydown($event)"
+          placeholder="Describe your coding requirement... (Enter to send, Shift+Enter for new line)"
+          rows="1"
+          [disabled]="isLoading"
+        ></textarea>
+        <button
+          class="send-btn"
+          (click)="sendMessage()"
+          [disabled]="!userInput.trim() || isLoading"
+          title="Send"
+        >
+          <i class="pi pi-send"></i>
+        </button>
+      </div>
+      <p class="input-hint">Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</p>
     </div>
-    <p class="input-hint">Press <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</p>
-  </div>
+
+  </main>
 
 </div>

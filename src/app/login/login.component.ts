@@ -39,7 +39,7 @@ export class LoginComponent {
       next: (res: any) => {
         this.loading = false;
         console.log('Login success', res);
-        this.router.navigate(['/expense-review']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.loading = false;

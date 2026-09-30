@@ -1,10 +1,5 @@
-import { Component } from '@angular/core';
-import { ChatService } from './chat.service';
-
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { Component, OnInit } from '@angular/core';
+import { ChatService, ChatMessage, ChatSession } from './chat.service';
 
 @Component({
   selector: 'app-developerai',
@@ -12,13 +7,114 @@ export interface ChatMessage {
   templateUrl: './developerai.component.html',
   styleUrl: './developerai.component.css'
 })
-export class DeveloperaiComponent {
+export class DeveloperaiComponent implements OnInit {
+  sessions: ChatSession[] = [];
+  activeSessionId: string | null = null;
+  activeSession: ChatSession | null = null;
+
   messages: ChatMessage[] = [];
   userInput: string = '';
   isLoading: boolean = false;
+  isSessionsLoading: boolean = false;
+  isHistorySidebarOpen: boolean = true;
 
   constructor(private chatService: ChatService) {}
 
+  ngOnInit(): void {
+    this.loadSessionsList(true);
+  }
+
+  /**
+   * Load the list of sessions from backend and optionally auto-select the active one
+   */
+  loadSessionsList(autoSelect: boolean = false): void {
+    this.isSessionsLoading = true;
+    this.chatService.getSessions().subscribe({
+      next: (sessions) => {
+        this.sessions = sessions;
+        this.isSessionsLoading = false;
+
+        if (autoSelect) {
+          const savedSessionId = localStorage.getItem('active_session_id');
+          if (savedSessionId && this.sessions.some(s => s.id === savedSessionId)) {
+            this.selectSession(savedSessionId);
+          } else if (this.sessions.length > 0) {
+            this.selectSession(this.sessions[0].id);
+          } else {
+            this.startNewChat();
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load sessions:', err);
+        this.isSessionsLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Select and load a conversation session
+   */
+  selectSession(sessionId: string): void {
+    if (this.isLoading) return;
+
+    this.activeSessionId = sessionId;
+    localStorage.setItem('active_session_id', sessionId);
+
+    this.chatService.getSession(sessionId).subscribe({
+      next: (session) => {
+        this.activeSession = session;
+        this.messages = session.messages || [];
+        this.scrollToBottom();
+      },
+      error: (err) => {
+        console.error('Failed to load session details:', err);
+      }
+    });
+  }
+
+  /**
+   * Start a fresh new chat session
+   */
+  startNewChat(): void {
+    if (this.isLoading) return;
+    this.activeSessionId = null;
+    this.activeSession = null;
+    this.messages = [];
+    this.userInput = '';
+    localStorage.removeItem('active_session_id');
+  }
+
+  /**
+   * Delete a session
+   */
+  deleteSession(sessionId: string, event: MouseEvent): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this conversation?')) {
+      this.chatService.deleteSession(sessionId).subscribe({
+        next: () => {
+          this.sessions = this.sessions.filter(s => s.id !== sessionId);
+          if (this.activeSessionId === sessionId) {
+            this.startNewChat();
+          }
+        },
+        error: (err) => {
+          console.error('Failed to delete session:', err);
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle the conversation history drawer
+   */
+  toggleHistorySidebar(): void {
+    this.isHistorySidebarOpen = !this.isHistorySidebarOpen;
+  }
+
+  /**
+   * Send user prompt to the AI assistant
+   */
   sendMessage(): void {
     const trimmed = this.userInput.trim();
     if (!trimmed || this.isLoading) {
@@ -26,16 +122,41 @@ export class DeveloperaiComponent {
     }
 
     // Display user message immediately
-    this.messages.push({ role: 'user', content: trimmed });
+    this.messages.push({
+      role: 'user',
+      content: trimmed,
+      timestamp: new Date().toISOString()
+    });
     this.userInput = '';
     this.isLoading = true;
+    this.scrollToBottom();
 
-    this.chatService.sendCodeHelpRequest(trimmed).subscribe({
+    const currentSessionId = this.activeSessionId || undefined;
+
+    this.chatService.sendCodeHelpRequest(trimmed, currentSessionId).subscribe({
       next: (res) => {
         const aiResponse = res?.response?.trim()
           ? res.response
           : 'No response received from the AI service.';
-        this.messages.push({ role: 'assistant', content: aiResponse });
+
+        this.messages.push({
+          role: 'assistant',
+          content: aiResponse,
+          timestamp: new Date().toISOString()
+        });
+
+        // Set active session from backend response
+        if (res.session_id) {
+          this.activeSessionId = res.session_id;
+          localStorage.setItem('active_session_id', res.session_id);
+        }
+        if (res.session) {
+          this.activeSession = res.session;
+        }
+
+        // Refresh the sessions list so the new/updated title appears
+        this.loadSessionsList(false);
+
         this.isLoading = false;
         this.scrollToBottom();
       },
@@ -46,15 +167,17 @@ export class DeveloperaiComponent {
         const detail = err?.error?.detail;
         const userMessage = detail
           ? `AI service error: ${detail}`
-          : 'Unable to connect to the AI service. Please try again.';
+          : 'Unable to connect to the AI service. Please make sure the backend server is running.';
 
-        this.messages.push({ role: 'assistant', content: userMessage });
+        this.messages.push({
+          role: 'assistant',
+          content: userMessage,
+          timestamp: new Date().toISOString()
+        });
         this.isLoading = false;
         this.scrollToBottom();
       }
     });
-
-    this.scrollToBottom();
   }
 
   handleKeydown(event: KeyboardEvent): void {

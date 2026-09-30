@@ -2,3 +2,6 @@ google-genai
 fastapi
 uvicorn
 python-dotenv
+torch
+transformers
+accelerate
