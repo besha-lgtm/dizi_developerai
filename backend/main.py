@@ -4,12 +4,15 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from gemini_service import generate_response, generate_response_with_usage
 from classifier import classify_requirement
+
+load_dotenv()
 
 
 app = FastAPI(title="Developer AI API")
@@ -53,6 +56,49 @@ sessions_db: Dict[str, Any] = load_sessions()
 
 def get_current_time_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# ---------------------------------------------------------------------------
+# Daily Usage Tracking  (persists across session deletes)
+# ---------------------------------------------------------------------------
+# Stores: { "YYYY-MM-DD": { "requests": N, "tokens": T }, ... }
+DAILY_USAGE_FILE = os.path.join(os.path.dirname(__file__), "daily_usage.json")
+
+
+def load_daily_usage() -> Dict[str, Any]:
+    if os.path.exists(DAILY_USAGE_FILE):
+        try:
+            with open(DAILY_USAGE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[DailyUsage] Error reading {DAILY_USAGE_FILE}: {e}")
+    return {}
+
+
+def save_daily_usage(data: Dict[str, Any]) -> None:
+    try:
+        with open(DAILY_USAGE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[DailyUsage] Error writing {DAILY_USAGE_FILE}: {e}")
+
+
+def increment_daily_usage(tokens_used: int = 0) -> None:
+    """Increment today's request count and token count. Never decrements."""
+    today = datetime.now(timezone.utc).date().isoformat()  # e.g. '2026-10-05'
+    data = load_daily_usage()
+    if today not in data:
+        data[today] = {"requests": 0, "tokens": 0}
+    data[today]["requests"] += 1
+    data[today]["tokens"] = data[today].get("tokens", 0) + tokens_used
+    save_daily_usage(data)
+
+
+def get_today_requests() -> int:
+    """Return the number of API requests made today (never resets on delete)."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    data = load_daily_usage()
+    return data.get(today, {}).get("requests", 0)
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +188,74 @@ def delete_session(session_id: str):
     del sessions_db[session_id]
     save_sessions(sessions_db)
     return {"deleted": True, "session_id": session_id}
+
+
+
+# ---------------------------------------------------------------------------
+# Dashboard Stats Endpoint
+# ---------------------------------------------------------------------------
+# gemini-3.1-flash-lite rate limits:
+# Google AI Studio Free Tier limit for gemini-3.1-flash-lite is 500 Requests Per Day (RPD).
+# Paid tier supports up to 10,000,000 RPD. Can be overridden via GEMINI_DAILY_REQUEST_LIMIT in .env.
+DAILY_REQUEST_LIMIT = int(os.getenv("GEMINI_DAILY_REQUEST_LIMIT", 500))   # requests per day (RPD)
+MONTHLY_TOKEN_LIMIT = int(os.getenv("GEMINI_MONTHLY_TOKEN_LIMIT", 1_000_000))  # tokens per month (1M)
+
+
+@app.get("/dashboard")
+def get_dashboard_stats():
+    """
+    Returns aggregated stats for the token usage dashboard.
+    Daily requests are tracked via daily_usage.json — they persist
+    even when sessions are deleted, so the count is always accurate.
+    """
+    now = datetime.now(timezone.utc)
+    current_year = now.year
+
+    total_conversations = len(sessions_db)
+    total_tokens = 0
+
+    # monthly_tokens: month index 0-11 -> token count
+    monthly_tokens: Dict[int, int] = {i: 0 for i in range(12)}
+
+    for s_id, s_data in sessions_db.items():
+        token_usage = s_data.get("token_usage", {})
+        session_tokens = token_usage.get("total_tokens", 0) or 0
+        total_tokens += session_tokens
+
+        # Monthly breakdown for current year (by session created_at)
+        created_at = s_data.get("created_at", "")
+        if created_at:
+            try:
+                dt = datetime.fromisoformat(created_at)
+                if dt.year == current_year:
+                    monthly_tokens[dt.month - 1] += session_tokens
+            except Exception:
+                pass
+
+    # ── Daily requests: read from persistent daily_usage.json ──
+    # This counter only ever increments — deleting a session never reduces it.
+    requests_made_today = get_today_requests()
+    daily_requests_left = max(0, DAILY_REQUEST_LIMIT - requests_made_today)
+
+    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    monthly_usage = [
+        {"month": month_labels[i], "tokens": monthly_tokens[i]}
+        for i in range(12)
+    ]
+
+    return {
+        "total_conversations": total_conversations,
+        "total_tokens_used": total_tokens,
+        "daily_requests_left": daily_requests_left,
+        "daily_request_limit": DAILY_REQUEST_LIMIT,
+        "requests_made_today": requests_made_today,
+        "monthly_token_limit": MONTHLY_TOKEN_LIMIT,
+        "model": "gemini-3.1-flash-lite",
+        "current_year": current_year,
+        "monthly_usage": monthly_usage
+    }
 
 
 @app.post("/help/code")
@@ -394,6 +508,9 @@ Now solve the user's requirement.
 
         # Persist session updates
         save_sessions(sessions_db)
+
+        # ── Increment daily request counter (survives session deletes) ──
+        increment_daily_usage(tokens_used=usage.get("total_tokens", 0) or 0)
 
         return {
             "response": response_text,

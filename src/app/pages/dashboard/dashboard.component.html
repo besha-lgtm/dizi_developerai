@@ -1,5 +1,102 @@
+<div class="dashboard-wrapper">
 
-<div class="page-content">
-  <h2>Dashboard</h2>
-  <p>Welcome to Developer AI Dashboard.</p>
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !loading">
+    <div class="error-icon">
+      <i class="pi pi-exclamation-triangle"></i>
+    </div>
+    <h3>Unable to load dashboard</h3>
+    <p>Could not connect to the backend. Make sure the server is running.</p>
+    <button class="retry-btn" (click)="loadDashboard()">
+      <i class="pi pi-refresh"></i> Retry
+    </button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" *ngIf="stats && !loading">
+
+    <!-- ── ROW 1: STAT CARDS ── -->
+    <div class="stats-row">
+
+      <!-- Card 1: Total Conversations -->
+      <div class="stat-card conversations">
+        <div class="card-icon">
+          <i class="pi pi-comments"></i>
+        </div>
+        <div class="card-body">
+          <div class="card-value">{{ formatNumber(animConversations) }}</div>
+          <div class="card-label">Total Conversations</div>
+        </div>
+        <div class="card-glow conversations-glow"></div>
+      </div>
+
+      <!-- Card 2: Total Tokens Used -->
+      <div class="stat-card tokens">
+        <div class="card-icon">
+          <i class="pi pi-chart-bar"></i>
+        </div>
+        <div class="card-body">
+          <div class="card-value">{{ formatNumber(animTokens) }}</div>
+          <div class="card-label">Total Tokens Used</div>
+        </div>
+        <div class="card-glow tokens-glow"></div>
+      </div>
+
+      <!-- Card 3: Daily Requests Left -->
+      <div class="stat-card daily">
+        <div class="card-icon">
+          <i class="pi pi-clock"></i>
+        </div>
+        <div class="card-body">
+          <div class="card-value">{{ formatNumber(animDailyLeft) }}</div>
+          <div class="card-label">Daily Requests Left</div>
+          <div class="card-sublabel">of {{ formatNumber(stats.daily_request_limit) }} / day</div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div
+            class="progress-bar-fill"
+            [style.width.%]="(stats.daily_requests_left / stats.daily_request_limit) * 100">
+          </div>
+        </div>
+        <div class="card-glow daily-glow"></div>
+      </div>
+
+    </div>
+
+    <!-- ── ROW 2: MONTHLY CHART ── -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title-block">
+          <div class="chart-title">
+            <i class="pi pi-chart-line"></i>
+            Monthly Token Usage ({{ stats.current_year }})
+          </div>
+          <div class="chart-subtitle">
+            Linear trend of Gemini API tokens consumed per month
+          </div>
+        </div>
+        <div class="chart-badge">
+          {{ currentMonthLabel }}: {{ formatNumber(currentMonthTokens) }} tokens
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <canvas #tokenChart></canvas>
+      </div>
+
+      <div class="chart-footer">
+        <span class="model-badge">
+          <i class="pi pi-microchip-ai"></i>
+          {{ stats.model }}
+        </span>
+      </div>
+    </div>
+
+  </div>
 </div>
