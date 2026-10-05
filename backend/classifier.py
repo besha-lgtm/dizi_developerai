@@ -11,13 +11,17 @@ print("Loading requirement classifier...")
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
+# Determine device: use CUDA if available, otherwise CPU
+# Avoid device_map="auto" which can offload weights to meta/disk
+# and break inference on machines with limited VRAM.
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
-    torch_dtype="auto",
-    device_map="auto"
-)
+    torch_dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
+).to(DEVICE)
 
-print("Requirement classifier loaded.")
+print(f"Requirement classifier loaded on {DEVICE}.")
 
 
 CATEGORIES = {
@@ -116,7 +120,7 @@ JSON:
     inputs = tokenizer(
         text,
         return_tensors="pt"
-    ).to(model.device)
+    ).to(DEVICE)
 
     with torch.no_grad():
         outputs = model.generate(

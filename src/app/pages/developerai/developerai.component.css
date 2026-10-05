@@ -171,6 +171,9 @@
   border-radius: 4px;
   font-size: 10px;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .session-item.active .session-token-tag {
@@ -335,6 +338,14 @@
   align-items: center;
   gap: 4px;
   margin-left: 6px;
+}
+
+.token-detail {
+  font-size: 10px;
+  font-weight: 400;
+  color: #16a34a;
+  opacity: 0.85;
+  white-space: nowrap;
 }
 
 .header-new-btn {

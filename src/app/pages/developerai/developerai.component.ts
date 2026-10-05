@@ -43,6 +43,17 @@ export class DeveloperaiComponent implements OnInit {
           } else {
             this.startNewChat();
           }
+        } else {
+          // Sync the active session's token_usage from the refreshed list
+          // so the header token badge stays up-to-date without a full reload.
+          if (this.activeSessionId) {
+            const updated = sessions.find(s => s.id === this.activeSessionId);
+            if (updated && this.activeSession) {
+              this.activeSession.token_usage = updated.token_usage;
+              this.activeSession.message_count = updated.message_count;
+              this.activeSession.updated_at = updated.updated_at;
+            }
+          }
         }
       },
       error: (err) => {
@@ -95,7 +106,12 @@ export class DeveloperaiComponent implements OnInit {
         next: () => {
           this.sessions = this.sessions.filter(s => s.id !== sessionId);
           if (this.activeSessionId === sessionId) {
-            this.startNewChat();
+            // Auto-select the next available session after deletion
+            if (this.sessions.length > 0) {
+              this.selectSession(this.sessions[0].id);
+            } else {
+              this.startNewChat();
+            }
           }
         },
         error: (err) => {

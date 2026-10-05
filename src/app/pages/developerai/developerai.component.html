@@ -40,7 +40,7 @@
           <div class="session-item-meta">
             <span>{{ s.message_count || (s.messages ? s.messages.length : 0) }} msgs</span>
             <span *ngIf="s.token_usage?.total_tokens" class="session-token-tag">
-              {{ s.token_usage?.total_tokens }} tokens
+              <i class="pi pi-bolt"></i> {{ s.token_usage!.total_tokens! >= 1000 ? (s.token_usage!.total_tokens! / 1000 | number:'1.1-1') + 'k' : s.token_usage?.total_tokens }} tkns
             </span>
           </div>
         </div>
@@ -79,7 +79,13 @@
             <span class="status-dot" [class.loading]="isLoading"></span>
             {{ isLoading ? 'Thinking...' : (activeSessionId ? 'Session Active' : 'Ready') }}
             <span *ngIf="activeSession?.token_usage?.total_tokens" class="header-token-badge">
-              <i class="pi pi-bolt"></i> {{ activeSession?.token_usage?.total_tokens }} tokens
+              <i class="pi pi-bolt"></i>
+              {{ activeSession?.token_usage?.total_tokens }} tokens
+              <span class="token-detail">
+                &#x25B4;{{ activeSession?.token_usage?.prompt_tokens }}
+                &nbsp;&middot;&nbsp;
+                &#x25BC;{{ activeSession?.token_usage?.completion_tokens }}
+              </span>
             </span>
           </span>
         </div>
