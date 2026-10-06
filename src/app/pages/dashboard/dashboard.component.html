@@ -69,25 +69,53 @@
 
     </div>
 
-    <!-- ── ROW 2: MONTHLY CHART ── -->
+    <!-- ── ROW 2: DYNAMIC TOKEN USAGE CHART ── -->
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title-block">
           <div class="chart-title">
             <i class="pi pi-chart-line"></i>
-            Monthly Token Usage ({{ stats.current_year }})
+            {{ chartTitle }}
           </div>
           <div class="chart-subtitle">
-            Linear trend of Gemini API tokens consumed per month
+            {{ chartSubtitle }}
           </div>
         </div>
-        <div class="chart-badge">
-          {{ currentMonthLabel }}: {{ formatNumber(currentMonthTokens) }} tokens
+        <div class="chart-controls">
+          <div class="view-toggles">
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.active]="chartMode === 'daily'"
+              (click)="setChartMode('daily')">
+              <i class="pi pi-calendar"></i> Daily Breakdown
+            </button>
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.active]="chartMode === 'monthly'"
+              (click)="setChartMode('monthly')">
+              <i class="pi pi-chart-bar"></i> Monthly Trend
+            </button>
+          </div>
+          <div class="chart-badge">
+            {{ chartBadgeLabel }}
+          </div>
         </div>
       </div>
 
       <div class="chart-area">
         <canvas #tokenChart></canvas>
+      </div>
+
+      <!-- Daily Activity Summary Breakdown -->
+      <div class="daily-pills" *ngIf="chartMode === 'daily' && stats.daily_usage?.length">
+        <div class="daily-pill" *ngFor="let item of stats.daily_usage">
+          <span class="pill-dot"></span>
+          <span class="pill-date">{{ item.date }}</span>
+          <span class="pill-tokens">{{ formatNumber(item.tokens) }} tokens</span>
+          <span class="pill-reqs">({{ item.requests }} {{ item.requests === 1 ? 'req' : 'reqs' }})</span>
+        </div>
       </div>
 
       <div class="chart-footer">

@@ -12,7 +12,19 @@ import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-interface DashboardStats {
+export interface DailyUsageItem {
+  date: string;
+  full_date: string;
+  tokens: number;
+  requests: number;
+}
+
+export interface MonthlyUsageItem {
+  month: string;
+  tokens: number;
+}
+
+export interface DashboardStats {
   total_conversations: number;
   total_tokens_used: number;
   daily_requests_left: number;
@@ -20,7 +32,8 @@ interface DashboardStats {
   monthly_token_limit: number;
   model: string;
   current_year: number;
-  monthly_usage: { month: string; tokens: number }[];
+  monthly_usage: MonthlyUsageItem[];
+  daily_usage: DailyUsageItem[];
 }
 
 @Component({
@@ -35,6 +48,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   stats: DashboardStats | null = null;
   loading = true;
   error = false;
+  chartMode: 'daily' | 'monthly' = 'daily';
   private chart: Chart | null = null;
   private dataLoaded = false;
   private viewReady = false;
@@ -44,18 +58,32 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   animTokens = 0;
   animDailyLeft = 0;
 
-  // Highlight: current month name
-  get currentMonthLabel(): string {
-    if (!this.stats) return '';
-    const months = ['January','February','March','April','May','June',
-                    'July','August','September','October','November','December'];
-    return months[new Date().getMonth()];
+  get chartTitle(): string {
+    return this.chartMode === 'daily'
+      ? 'Daily Token Usage (Project Timeline)'
+      : `Monthly Token Usage (${this.stats?.current_year ?? ''})`;
   }
 
-  get currentMonthTokens(): number {
-    if (!this.stats) return 0;
-    const m = new Date().getMonth();
-    return this.stats.monthly_usage[m]?.tokens ?? 0;
+  get chartSubtitle(): string {
+    return this.chartMode === 'daily'
+      ? 'Accurate tokens consumed per day from actual developer activity'
+      : 'Accurate monthly trend of Gemini API tokens consumed';
+  }
+
+  get chartBadgeLabel(): string {
+    if (!this.stats) return '';
+    if (this.chartMode === 'daily') {
+      const daily = this.stats.daily_usage ?? [];
+      if (daily.length === 0) return 'No activity yet';
+      const last = daily[daily.length - 1];
+      return `Latest (${last.date}): ${this.formatNumber(last.tokens)} tokens`;
+    } else {
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      const m = new Date().getMonth();
+      const currentMonthTokens = this.stats.monthly_usage?.[m]?.tokens ?? 0;
+      return `${months[m]}: ${this.formatNumber(currentMonthTokens)} tokens`;
+    }
   }
 
   constructor(private http: HttpClient, private ngZone: NgZone) {}
@@ -73,6 +101,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.chart?.destroy();
+  }
+
+  setChartMode(mode: 'daily' | 'monthly'): void {
+    if (this.chartMode === mode) return;
+    this.chartMode = mode;
+    this.buildChart();
   }
 
   loadDashboard(): void {
@@ -134,14 +168,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.stats || !this.chartRef?.nativeElement) return;
     this.chart?.destroy();
 
-    const labels = this.stats.monthly_usage.map(m => m.month);
-    const data = this.stats.monthly_usage.map(m => m.tokens);
+    const isDaily = this.chartMode === 'daily';
+    const labels = isDaily
+      ? (this.stats.daily_usage || []).map(d => d.date)
+      : (this.stats.monthly_usage || []).map(m => m.month);
+
+    const data = isDaily
+      ? (this.stats.daily_usage || []).map(d => d.tokens)
+      : (this.stats.monthly_usage || []).map(m => m.tokens);
 
     const ctx = this.chartRef.nativeElement.getContext('2d')!;
 
     // Gradient fill
-    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
-    gradient.addColorStop(0, 'rgba(108, 99, 255, 0.30)');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(108, 99, 255, 0.32)');
     gradient.addColorStop(1, 'rgba(108, 99, 255, 0.00)');
 
     this.chart = new Chart(ctx, {
@@ -149,18 +189,18 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       data: {
         labels,
         datasets: [{
-          label: 'Tokens Used',
+          label: isDaily ? 'Daily Tokens' : 'Monthly Tokens',
           data,
           fill: true,
           backgroundColor: gradient,
           borderColor: '#6C63FF',
           borderWidth: 2.5,
-          pointBackgroundColor: '#fff',
+          pointBackgroundColor: '#ffffff',
           pointBorderColor: '#6C63FF',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          tension: 0
+          pointBorderWidth: 2.5,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          tension: isDaily ? 0.25 : 0
         }]
       },
       options: {
@@ -172,9 +212,27 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: '#1e1e2e',
             titleColor: '#a0a0c0',
             bodyColor: '#ffffff',
-            padding: 10,
+            padding: 12,
+            boxPadding: 4,
+            usePointStyle: true,
             callbacks: {
-              label: (ctx) => ` ${(ctx.parsed.y ?? 0).toLocaleString()} tokens`
+              title: (items) => {
+                const idx = items[0]?.dataIndex ?? 0;
+                if (isDaily && this.stats?.daily_usage?.[idx]) {
+                  const item = this.stats.daily_usage[idx];
+                  return `${item.full_date} (${item.date})`;
+                }
+                return items[0]?.label ?? '';
+              },
+              label: (ctx) => {
+                const idx = ctx.dataIndex;
+                const val = (ctx.parsed.y ?? 0).toLocaleString();
+                const lines = [` Tokens: ${val}`];
+                if (isDaily && this.stats?.daily_usage?.[idx]?.requests) {
+                  lines.push(` Requests: ${this.stats.daily_usage[idx].requests} queries`);
+                }
+                return lines;
+              }
             }
           }
         },

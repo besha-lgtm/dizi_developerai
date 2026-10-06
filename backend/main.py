@@ -205,43 +205,54 @@ MONTHLY_TOKEN_LIMIT = int(os.getenv("GEMINI_MONTHLY_TOKEN_LIMIT", 1_000_000))  #
 def get_dashboard_stats():
     """
     Returns aggregated stats for the token usage dashboard.
-    Daily requests are tracked via daily_usage.json — they persist
-    even when sessions are deleted, so the count is always accurate.
+    Accurately tracks tokens per day and month based on actual usage timestamps.
     """
     now = datetime.now(timezone.utc)
     current_year = now.year
 
     total_conversations = len(sessions_db)
-    total_tokens = 0
 
-    # monthly_tokens: month index 0-11 -> token count
+    # ── Accurate Daily and Monthly Breakdown ──
+    daily_data = load_daily_usage()
+
+    # Calculate total tokens directly from sessions & daily usage
+    total_tokens = sum(
+        (s.get("token_usage", {}).get("total_tokens", 0) or 0)
+        for s in sessions_db.values()
+    )
+    if total_tokens == 0:
+        total_tokens = sum(v.get("tokens", 0) for v in daily_data.values())
+
     monthly_tokens: Dict[int, int] = {i: 0 for i in range(12)}
+    daily_usage_list = []
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-    for s_id, s_data in sessions_db.items():
-        token_usage = s_data.get("token_usage", {})
-        session_tokens = token_usage.get("total_tokens", 0) or 0
-        total_tokens += session_tokens
+    for date_str in sorted(daily_data.keys()):
+        entry = daily_data[date_str]
+        t_count = entry.get("tokens", 0)
+        r_count = entry.get("requests", 0)
+        try:
+            dt = datetime.fromisoformat(date_str)
+            if dt.year == current_year:
+                monthly_tokens[dt.month - 1] += t_count
+            formatted_date = f"{month_names[dt.month - 1]} {dt.day:02d}"
+        except Exception:
+            formatted_date = date_str
 
-        # Monthly breakdown for current year (by session created_at)
-        created_at = s_data.get("created_at", "")
-        if created_at:
-            try:
-                dt = datetime.fromisoformat(created_at)
-                if dt.year == current_year:
-                    monthly_tokens[dt.month - 1] += session_tokens
-            except Exception:
-                pass
+        daily_usage_list.append({
+            "date": formatted_date,
+            "full_date": date_str,
+            "tokens": t_count,
+            "requests": r_count
+        })
 
     # ── Daily requests: read from persistent daily_usage.json ──
-    # This counter only ever increments — deleting a session never reduces it.
     requests_made_today = get_today_requests()
     daily_requests_left = max(0, DAILY_REQUEST_LIMIT - requests_made_today)
 
-    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
     monthly_usage = [
-        {"month": month_labels[i], "tokens": monthly_tokens[i]}
+        {"month": month_names[i], "tokens": monthly_tokens[i]}
         for i in range(12)
     ]
 
@@ -254,7 +265,8 @@ def get_dashboard_stats():
         "monthly_token_limit": MONTHLY_TOKEN_LIMIT,
         "model": "gemini-3.1-flash-lite",
         "current_year": current_year,
-        "monthly_usage": monthly_usage
+        "monthly_usage": monthly_usage,
+        "daily_usage": daily_usage_list
     }
 
 
@@ -491,7 +503,8 @@ Now solve the user's requirement.
             "id": assistant_msg_id,
             "role": "assistant",
             "content": response_text,
-            "timestamp": assistant_now
+            "timestamp": assistant_now,
+            "token_usage": usage
         }
         session["messages"].append(assistant_msg)
 
@@ -520,9 +533,18 @@ Now solve the user's requirement.
         }
 
     except HTTPException:
+        # Roll back unanswered user message so it does not persist on failure
+        if session.get("messages") and session["messages"][-1].get("id") == user_msg_id:
+            session["messages"].pop()
+            save_sessions(sessions_db)
         raise
 
     except Exception as e:
+        # Roll back unanswered user message so it does not persist on failure
+        if session.get("messages") and session["messages"][-1].get("id") == user_msg_id:
+            session["messages"].pop()
+            save_sessions(sessions_db)
+
         error_message = str(e)
         print(f"[AI Error] {error_message}")
 

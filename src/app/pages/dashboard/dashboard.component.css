@@ -242,6 +242,50 @@
   margin-top: 4px;
 }
 
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.view-toggles {
+  display: flex;
+  background: #f1f2fa;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c7ca8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn i {
+  font-size: 13px;
+}
+
+.toggle-btn:hover {
+  color: #6C63FF;
+}
+
+.toggle-btn.active {
+  background: #ffffff;
+  color: #6C63FF;
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.15);
+}
+
 .chart-badge {
   background: #ede9ff;
   color: #6C63FF;
@@ -260,6 +304,57 @@
 .chart-area canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* ─── Daily Activity Pills ───────────────────────────────────────── */
+.daily-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #e4e6f4;
+}
+
+.daily-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f8f9fe;
+  border: 1px solid #e7e9f7;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #4b4b6e;
+  transition: all 0.2s ease;
+}
+
+.daily-pill:hover {
+  background: #ede9ff;
+  border-color: #d4ceff;
+  transform: translateY(-1px);
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6C63FF;
+}
+
+.pill-date {
+  font-weight: 600;
+  color: #2b2b48;
+}
+
+.pill-tokens {
+  font-weight: 700;
+  color: #6C63FF;
+}
+
+.pill-reqs {
+  color: #9999bb;
+  font-size: 11px;
 }
 
 /* Chart Footer */

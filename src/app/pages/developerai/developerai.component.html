@@ -7,10 +7,6 @@
         <i class="pi pi-comments"></i>
         <span>Conversations</span>
       </div>
-      <button class="new-chat-btn" (click)="startNewChat()" title="Start New Conversation">
-        <i class="pi pi-plus"></i>
-        <span>New Chat</span>
-      </button>
     </div>
 
     <!-- SESSIONS LIST -->
@@ -164,6 +160,15 @@
 
     <!-- INPUT AREA -->
     <div class="chat-input-area">
+      <!-- Error Notification (disappears on dismiss or timeout) -->
+      <div class="chat-error-banner" *ngIf="errorMessage">
+        <div class="error-banner-content">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+        <button class="error-banner-close" (click)="errorMessage = null" title="Dismiss">&times;</button>
+      </div>
+
       <div class="input-wrapper">
         <textarea
           class="chat-input"

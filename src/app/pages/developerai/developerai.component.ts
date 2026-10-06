@@ -17,6 +17,7 @@ export class DeveloperaiComponent implements OnInit {
   isLoading: boolean = false;
   isSessionsLoading: boolean = false;
   isHistorySidebarOpen: boolean = true;
+  errorMessage: string | null = null;
 
   constructor(private chatService: ChatService) {}
 
@@ -93,6 +94,7 @@ export class DeveloperaiComponent implements OnInit {
     this.activeSession = null;
     this.messages = [];
     this.userInput = '';
+    this.errorMessage = null;
     localStorage.removeItem('active_session_id');
   }
 
@@ -137,13 +139,17 @@ export class DeveloperaiComponent implements OnInit {
       return;
     }
 
-    // Display user message immediately
-    this.messages.push({
+    const tempUserMsg: ChatMessage = {
       role: 'user',
       content: trimmed,
       timestamp: new Date().toISOString()
-    });
+    };
+
+    // Display user message optimistically
+    this.messages.push(tempUserMsg);
+    const sentInput = trimmed;
     this.userInput = '';
+    this.errorMessage = null;
     this.isLoading = true;
     this.scrollToBottom();
 
@@ -179,17 +185,25 @@ export class DeveloperaiComponent implements OnInit {
       error: (err) => {
         console.error('API error:', err);
 
-        // Extract specific message from FastAPI HTTPException if available
-        const detail = err?.error?.detail;
-        const userMessage = detail
-          ? `AI service error: ${detail}`
-          : 'Unable to connect to the AI service. Please make sure the backend server is running.';
+        // Remove the user message that did not get an output so it disappears!
+        const msgIdx = this.messages.indexOf(tempUserMsg);
+        if (msgIdx !== -1) {
+          this.messages.splice(msgIdx, 1);
+        }
 
-        this.messages.push({
-          role: 'assistant',
-          content: userMessage,
-          timestamp: new Date().toISOString()
-        });
+        // Restore prompt back to input box so the user can easily retry
+        this.userInput = sentInput;
+
+        // Show friendly error notification
+        const detail = err?.error?.detail;
+        this.errorMessage = detail
+          ? `AI service: ${detail}`
+          : 'Failed to get a response from the AI service. Please try again.';
+
+        setTimeout(() => {
+          this.errorMessage = null;
+        }, 6000);
+
         this.isLoading = false;
         this.scrollToBottom();
       }
