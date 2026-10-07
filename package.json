@@ -19,6 +19,8 @@
     "@angular/platform-browser-dynamic": "^19.1.0",
     "@angular/router": "^19.1.0",
     "bootstrap": "^5.3.8",
+    "chart.js": "^4.5.1",
+    "listr2": "^11.1.0",
     "ngx-toastr": "^20.0.5",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
