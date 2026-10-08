@@ -21,6 +21,8 @@
     "bootstrap": "^5.3.8",
     "chart.js": "^4.5.1",
     "listr2": "^11.1.0",
+    "marked": "^18.1.0",
+    "ngx-markdown": "^22.1.0",
     "ngx-toastr": "^20.0.5",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",

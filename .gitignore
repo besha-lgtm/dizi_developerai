@@ -23,12 +23,17 @@ __pycache__/
 *.pyd
 *.pyc
 
+# Local runtime data / session storage (created automatically on startup)
+backend/sessions.json
+backend/daily_usage.json
+backend/*.json
+
 # ==============================================
 # NODE / ANGULAR — Frontend
 # ==============================================
 
 # Dependencies (huge folder, auto-installed)
-# node_modules/
+node_modules/
 
 # Angular build output
 dist/

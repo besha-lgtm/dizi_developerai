@@ -539,15 +539,141 @@
   max-width: 80%;
 }
 
-/* AI response text — preserves Gemini markdown/code blocks */
-.ai-response-text {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: 'Menlo', 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13.5px;
-  line-height: 1.7;
+/* AI Markdown Response — scoped to assistant message content */
+::ng-deep .ai-md-content {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
   color: #1e293b;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* ── Paragraphs ── */
+::ng-deep .ai-md-content p {
+  margin: 0 0 10px;
+}
+::ng-deep .ai-md-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Headings ── */
+::ng-deep .ai-md-content h1,
+::ng-deep .ai-md-content h2,
+::ng-deep .ai-md-content h3,
+::ng-deep .ai-md-content h4 {
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  margin: 18px 0 8px;
+}
+::ng-deep .ai-md-content h1:first-child,
+::ng-deep .ai-md-content h2:first-child,
+::ng-deep .ai-md-content h3:first-child {
+  margin-top: 0;
+}
+::ng-deep .ai-md-content h1 { font-size: 19px; }
+::ng-deep .ai-md-content h2 {
+  font-size: 16px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e2e8f0;
+}
+::ng-deep .ai-md-content h3 { font-size: 14.5px; }
+::ng-deep .ai-md-content h4 { font-size: 13.5px; }
+
+/* ── Bold / Italic ── */
+::ng-deep .ai-md-content strong { font-weight: 700; color: #0f172a; }
+::ng-deep .ai-md-content em     { font-style: italic; }
+
+/* ── Inline code ── */
+::ng-deep .ai-md-content code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'Menlo', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12.5px;
+  color: #0284c7;
+}
+
+/* ── Fenced code blocks ── */
+::ng-deep .ai-md-content pre {
+  background: #0f172a;
+  border-radius: 8px;
+  margin: 12px 0;
+  overflow-x: auto;
+  border: 1px solid #1e293b;
+  padding: 0;
+}
+::ng-deep .ai-md-content pre code {
+  display: block;
+  background: transparent;
+  border: none;
+  padding: 16px;
+  font-family: 'Menlo', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #e2e8f0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ── Lists ── */
+::ng-deep .ai-md-content ul,
+::ng-deep .ai-md-content ol {
+  margin: 6px 0 12px;
+  padding-left: 22px;
+}
+::ng-deep .ai-md-content li {
+  margin-bottom: 5px;
+}
+::ng-deep .ai-md-content li > ul,
+::ng-deep .ai-md-content li > ol {
+  margin: 4px 0;
+}
+
+/* ── Blockquote ── */
+::ng-deep .ai-md-content blockquote {
+  border-left: 3px solid #0ea5e9;
+  background: #f0f9ff;
+  border-radius: 0 6px 6px 0;
+  padding: 8px 14px;
+  margin: 12px 0;
+  color: #334155;
+}
+::ng-deep .ai-md-content blockquote p { margin: 0; }
+
+/* ── Horizontal rule ── */
+::ng-deep .ai-md-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 16px 0;
+}
+
+/* ── Links ── */
+::ng-deep .ai-md-content a {
+  color: #0ea5e9;
+  text-decoration: underline;
+}
+
+/* ── Tables ── */
+::ng-deep .ai-md-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+::ng-deep .ai-md-content th,
+::ng-deep .ai-md-content td {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+::ng-deep .ai-md-content th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 /* ============================================================

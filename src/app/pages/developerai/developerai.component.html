@@ -135,7 +135,7 @@
             <i class="pi pi-code"></i>
           </div>
           <div class="message assistant-message">
-            <pre class="ai-response-text">{{ msg.content }}</pre>
+            <markdown class="ai-md-content" [data]="msg.content"></markdown>
           </div>
         </div>
 

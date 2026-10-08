@@ -39,6 +39,14 @@ def load_sessions() -> Dict[str, Any]:
                 return json.load(f)
         except Exception as e:
             print(f"[Sessions] Error reading {SESSIONS_FILE}: {e}")
+            return {}
+    # File doesn't exist yet: create it initialized as an empty dictionary
+    try:
+        with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2, ensure_ascii=False)
+        print(f"[Sessions] Created new sessions file at {SESSIONS_FILE}")
+    except Exception as e:
+        print(f"[Sessions] Error creating {SESSIONS_FILE}: {e}")
     return {}
 
 
@@ -72,6 +80,14 @@ def load_daily_usage() -> Dict[str, Any]:
                 return json.load(f)
         except Exception as e:
             print(f"[DailyUsage] Error reading {DAILY_USAGE_FILE}: {e}")
+            return {}
+    # File doesn't exist yet: create it initialized as an empty dictionary
+    try:
+        with open(DAILY_USAGE_FILE, "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2, ensure_ascii=False)
+        print(f"[DailyUsage] Created new daily usage file at {DAILY_USAGE_FILE}")
+    except Exception as e:
+        print(f"[DailyUsage] Error creating {DAILY_USAGE_FILE}: {e}")
     return {}
 
 
@@ -100,6 +116,74 @@ def get_today_requests() -> int:
     data = load_daily_usage()
     return data.get(today, {}).get("requests", 0)
 
+CATEGORY_RULES = {
+    "Frontend": """
+Focus on UI, client-side logic, components, styling, state, and user interaction.
+Follow the existing frontend framework and project structure when provided.
+Prefer reusable, modular, responsive, and maintainable solutions.
+Do not modify backend or database logic unless explicitly requested.
+""",
+
+    "Backend": """
+Focus on APIs, server-side logic, business logic, validation, authentication,
+error handling, and backend architecture.
+Write modular, maintainable, and secure code.
+Do not modify unrelated frontend or database logic unless explicitly requested.
+""",
+
+    "MySQL": """
+Focus on SQL, database queries, schema, constraints, joins, and database performance.
+Use valid MySQL syntax and efficient queries.
+Preserve the intended result and handle relevant NULL, duplicate, and edge cases.
+Do not modify the database schema unless explicitly requested.
+""",
+
+    "Other": """
+Determine the appropriate technical approach from the user's requirement.
+Do not make unsupported assumptions.
+Ask for clarification only when essential.
+"""
+}
+
+
+TASK_RULES = {
+    "Code Generation": """
+Generate clean, reusable, modular, and maintainable code.
+Preserve existing functionality unless changes are requested.
+Avoid unnecessary dependencies and handle relevant validation and edge cases.
+""",
+
+    "Debugging": """
+Identify the likely root cause before providing the fix.
+Make the smallest appropriate change and avoid rewriting unrelated code.
+Explain why the problem occurs and how the fix resolves it.
+""",
+
+    "Code Explanation": """
+Explain the existing code clearly and step by step.
+Describe its purpose, flow, and important parts.
+Do not modify the code unless explicitly requested.
+""",
+
+    "Code Optimization": """
+Identify the performance, readability, or maintainability issue.
+Provide an optimized solution while preserving expected behavior.
+Explain the important improvements and relevant trade-offs.
+Avoid unnecessary optimization.
+""",
+
+    "Code Conversion": """
+Convert the implementation while preserving its functionality and important
+business logic.
+Explain important differences in the converted implementation.
+Avoid unrelated changes.
+""",
+
+    "Other": """
+Follow the user's specific requirement and use the selected category
+to guide the response.
+"""
+}
 
 # ---------------------------------------------------------------------------
 # Request / Response Models
@@ -343,154 +427,39 @@ def help_with_code(request: CodeHelpRequest):
             history_str += "\n"
 
         # Step 3: Build the Gemini prompt (preserving teammate's detailed classifier prompt)
-        prompt = f"""You are an AI Development Assistant.
+        category_rules = CATEGORY_RULES.get(
+            category,
+            CATEGORY_RULES["Other"]
+        )
 
-{history_str}Your task is to solve the user's development requirement using the
-provided Category and Task Type.
+        task_rules = TASK_RULES.get(
+            task_type,
+            TASK_RULES["Other"]
+        )
 
-==================================================
-CATEGORY
-==================================================
+        prompt = f"""
+You are an AI Development Assistant.
 
-Category: {category}
+Category:
+{category}
 
-Use the category to determine the relevant technical domain.
+Task Type:
+{task_type}
 
 Category-specific instructions:
-
-Frontend:
-- Focus on UI, client-side logic, components, styling, state management,
-  user interaction, and frontend behavior.
-- Follow the existing frontend framework and project structure when provided.
-- Prefer reusable and modular components.
-- Use clean, maintainable, and accessible implementation.
-- Make UI changes responsive when relevant.
-- Do not introduce unnecessary libraries or dependencies.
-- Do not modify backend or database logic unless explicitly requested.
-
-Backend:
-- Focus on APIs, server-side logic, business logic, validation,
-  authentication, error handling, and backend architecture.
-- Follow the existing backend framework and project structure when provided.
-- Use appropriate request and response models where applicable.
-- Write reusable, modular, and maintainable backend code.
-- Follow secure coding practices.
-- Never hardcode passwords, API keys, tokens, or other secrets.
-- Handle relevant errors and edge cases.
-- Do not modify unrelated frontend or database logic unless explicitly requested.
-
-MySQL:
-- Focus on SQL queries, database operations, schema-related requirements,
-  data retrieval, and query performance.
-- Use valid MySQL syntax.
-- Preserve the intended result of existing queries.
-- Prefer clear, efficient, and maintainable SQL.
-- Consider indexes and query performance when relevant.
-- Handle duplicate values, NULL values, and relevant edge cases when applicable.
-- Do not modify the database schema unless explicitly requested.
-- Do not introduce unnecessary database operations.
-
-Other:
-- Determine the appropriate technical approach from the user's requirement.
-- Do not make unsupported assumptions.
-- Ask for clarification only when essential information is missing.
-
-==================================================
-TASK TYPE
-==================================================
-
-Task Type: {task_type}
-
-Use the task type to determine HOW the requirement should be handled.
+{category_rules}
 
 Task-specific instructions:
+{task_rules}
 
-Code Generation:
-- Generate clean, reusable, modular, and maintainable code.
-- Follow the existing project structure when relevant.
-- Preserve existing functionality unless changes are requested.
-- Avoid unnecessary dependencies.
-- Handle relevant validation and edge cases.
-- Include appropriate tests or verification steps when useful.
-
-Debugging:
-- First identify the likely problem and root cause.
-- Analyze the provided code, error message, or behavior before proposing changes.
-- Provide the smallest appropriate fix.
-- Do not rewrite unrelated code.
-- Preserve the intended functionality.
-- Explain why the problem occurs.
-- Provide verification steps to confirm that the fix works.
-- If the provided information is insufficient, clearly state what is missing
-  instead of inventing details.
-
-Code Explanation:
-- Explain the existing code clearly and step by step.
-- Explain the purpose and flow of important sections.
-- Keep the explanation appropriate for the user's requirement.
-- Do not modify or rewrite the code unless explicitly requested.
-- Use simple examples when they improve understanding.
-
-Code Optimization:
-- Identify the current performance, readability, or maintainability issue.
-- Provide an optimized solution while preserving expected behavior.
-- Explain what was changed and why.
-- Consider time complexity, memory usage, query efficiency, or unnecessary
-  operations when relevant to the category.
-- Do not perform unnecessary optimization.
-- Mention important trade-offs when applicable.
-
-Code Conversion:
-- Convert the implementation to the requested language, framework,
-  technology, or format.
-- Preserve the original functionality and important business logic.
-- Maintain equivalent behavior wherever possible.
-- Explain important differences between the original and converted version.
-- Do not introduce unrelated changes.
-
-Other:
-- Follow the user's specific development requirement.
-- Use the category and requirement to determine the appropriate response.
-- Ask for clarification only when essential information is missing.
-
-==================================================
-USER REQUIREMENT
-==================================================
-
+User Requirement:
 {request.requirement}
 
-==================================================
-IMPORTANT RULES
-==================================================
-
-- Use ONLY the information relevant to the selected category and task type.
-- Do not add unrelated technologies, frameworks, libraries, or database
-  instructions.
-- Preserve existing functionality unless the user explicitly requests changes.
-- Prefer simple, reusable, modular, and maintainable solutions.
-- Do not invent missing project details, code, schemas, or error messages.
-- If important information is missing, clearly state the assumption or ask
-  for the required information.
-- Follow secure coding practices and never expose secrets or credentials.
-- Tailor the response to the actual requirement instead of giving a generic
-  answer.
-
-==================================================
-EXPECTED OUTPUT
-==================================================
-
-Provide the response in the following structure where applicable:
-
-1. Approach / Problem
-2. Solution / Implementation
-3. Explanation
-4. Verification / Tests
-5. Important Notes or Considerations
-
-Adapt the output structure when the selected Task Type requires a different
-format, such as debugging, explanation, optimization, or conversion.
-
-Now solve the user's requirement.
+Provide:
+1. A clear solution
+2. Working code or the required technical solution
+3. A short explanation
+4. Important considerations if applicable
 """
 
         # Step 4: Send prompt to Gemini (with usage tracking)

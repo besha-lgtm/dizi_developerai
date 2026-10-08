@@ -35,6 +35,7 @@ import { TagModule } from 'primeng/tag';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { DeveloperaiComponent } from './pages/developerai/developerai.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   declarations: [
@@ -71,7 +72,8 @@ import { DeveloperaiComponent } from './pages/developerai/developerai.component'
     TagModule,
     ConfirmDialogModule,
     FileUploadModule,
-    HttpClientModule
+    HttpClientModule,
+    MarkdownModule.forRoot()
   ],
   providers: [ConfirmationService, MessageService],
   bootstrap: [AppComponent],
