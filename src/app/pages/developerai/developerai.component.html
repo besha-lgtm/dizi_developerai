@@ -37,6 +37,7 @@
             <span>{{ s.message_count || (s.messages ? s.messages.length : 0) }} msgs</span>
             <span *ngIf="s.token_usage?.total_tokens" class="session-token-tag">
               <i class="pi pi-bolt"></i> {{ s.token_usage!.total_tokens! >= 1000 ? (s.token_usage!.total_tokens! / 1000 | number:'1.1-1') + 'k' : s.token_usage?.total_tokens }} tkns
+              <span class="tier-indicator-dot" [ngClass]="getTokenTierClass(s.token_usage?.total_tokens)"></span>
             </span>
           </div>
         </div>
@@ -88,12 +89,94 @@
       </div>
 
       <div class="chat-header-actions">
+        <button
+          class="header-token-toggle-btn"
+          [class.active]="showTokenSummary"
+          (click)="toggleTokenSummary()"
+          *ngIf="activeSession?.token_usage?.total_tokens"
+          title="Toggle Conversation Token Summary"
+        >
+          <i class="pi pi-chart-pie"></i>
+          <span class="btn-text">Token Summary</span>
+        </button>
         <button class="header-new-btn" (click)="startNewChat()" title="Start New Chat">
           <i class="pi pi-plus"></i>
           <span class="btn-text">New Chat</span>
         </button>
       </div>
     </header>
+
+    <!-- CONVERSATION-LEVEL TOKEN SUMMARY PANEL -->
+    <div class="conversation-token-summary-panel" *ngIf="showTokenSummary && activeSession?.token_usage?.total_tokens">
+      <div class="token-summary-card">
+        <div class="summary-top-row">
+          <div class="summary-title-wrap">
+            <i class="pi pi-bolt summary-main-icon"></i>
+            <div>
+              <div class="summary-heading">Conversation Token Analytics</div>
+              <div class="summary-subheading">Live token breakdown for current conversation</div>
+            </div>
+          </div>
+          <div class="summary-badges-wrap">
+            <span class="tier-badge" [ngClass]="getTokenTierClass(activeSession?.token_usage?.total_tokens)">
+              <span class="badge-dot"></span>
+              {{ getTokenTierLabel(activeSession?.token_usage?.total_tokens) }}
+            </span>
+            <button class="summary-close-btn" (click)="showTokenSummary = false" title="Close summary">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="summary-metrics-grid">
+          <!-- Metric 1: Total Tokens -->
+          <div class="metric-item total-metric">
+            <div class="metric-label">Total Tokens</div>
+            <div class="metric-value">{{ activeSession?.token_usage?.total_tokens | number }}</div>
+            <div class="metric-desc">Overall conversation volume</div>
+          </div>
+
+          <!-- Metric 2: Prompt / Input Tokens -->
+          <div class="metric-item prompt-metric">
+            <div class="metric-label">Input (Prompt)</div>
+            <div class="metric-value">{{ activeSession?.token_usage?.prompt_tokens | number }}</div>
+            <div class="metric-desc">{{ getPromptPercentage() }}% of thread tokens</div>
+          </div>
+
+          <!-- Metric 3: Completion / Output Tokens -->
+          <div class="metric-item completion-metric">
+            <div class="metric-label">Output (Completion)</div>
+            <div class="metric-value">{{ activeSession?.token_usage?.completion_tokens | number }}</div>
+            <div class="metric-desc">{{ getCompletionPercentage() }}% of thread tokens</div>
+          </div>
+
+          <!-- Metric 4: Turns & Avg -->
+          <div class="metric-item efficiency-metric">
+            <div class="metric-label">User Queries</div>
+            <div class="metric-value">{{ getUserQueryCount() }} <span class="sub-unit">turns</span></div>
+            <div class="metric-desc">~{{ getAvgTokensPerQuery() | number }} tkns / turn</div>
+          </div>
+        </div>
+
+        <!-- Visual Distribution Bar -->
+        <div class="token-ratio-bar-wrap">
+          <div class="ratio-labels">
+            <span class="label-prompt">
+              <span class="legend-dot prompt-dot"></span> Input / Prompt ({{ getPromptPercentage() }}%)
+            </span>
+            <span class="label-completion">
+              <span class="legend-dot completion-dot"></span> Output / Completion ({{ getCompletionPercentage() }}%)
+            </span>
+          </div>
+          <div class="ratio-track">
+            <div class="ratio-segment prompt-segment" [style.width.%]="getPromptPercentage()"
+              [title]="'Input: ' + (activeSession?.token_usage?.prompt_tokens | number) + ' tokens'"></div>
+            <div class="ratio-segment completion-segment" [style.width.%]="getCompletionPercentage()"
+              [title]="'Output: ' + (activeSession?.token_usage?.completion_tokens | number) + ' tokens'"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- MESSAGES AREA -->
     <div class="chat-messages">
@@ -136,6 +219,14 @@
           </div>
           <div class="message assistant-message">
             <markdown class="ai-md-content" [data]="msg.content"></markdown>
+            <div class="msg-token-indicator" *ngIf="msg.token_usage?.total_tokens">
+              <span class="indicator-chip" [ngClass]="getTokenTierClass(msg.token_usage?.total_tokens)">
+                <i class="pi pi-bolt"></i>
+                <span class="chip-total">{{ msg.token_usage?.total_tokens | number }} tokens</span>
+                <span class="chip-split">({{ msg.token_usage?.prompt_tokens | number }} in &middot; {{
+                  msg.token_usage?.completion_tokens | number }} out)</span>
+              </span>
+            </div>
           </div>
         </div>
 

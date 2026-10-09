@@ -8,6 +8,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
+  token_usage?: TokenUsage;
 }
 
 export interface TokenUsage {

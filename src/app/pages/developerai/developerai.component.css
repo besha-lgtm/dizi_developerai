@@ -348,6 +348,45 @@
   white-space: nowrap;
 }
 
+.chat-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.header-token-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-token-toggle-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.header-token-toggle-btn.active {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+  box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.15);
+}
+
+.header-token-toggle-btn i {
+  color: #6366f1;
+}
+
 .header-new-btn {
   display: flex;
   align-items: center;
@@ -356,7 +395,7 @@
   color: #334155;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 7px 13px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -851,4 +890,310 @@
 
 .error-banner-close:hover {
   color: #b91c1c;
+}
+
+/* ============================================================
+   TOKEN SUMMARY & VISUAL INDICATORS
+   ============================================================ */
+
+/* ── Conversation-Level Token Summary Panel ── */
+.conversation-token-summary-panel {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 24px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.token-summary-card {
+  max-width: 950px;
+  margin: 0 auto;
+}
+
+.summary-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.summary-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-main-icon {
+  font-size: 18px;
+  color: #f59e0b;
+  background: #fef3c7;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.summary-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.summary-subheading {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.summary-badges-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-close-btn:hover {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+/* Summary Metrics Grid */
+.summary-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.metric-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.metric-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.metric-value .sub-unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.metric-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.total-metric {
+  border-left: 3px solid #6366f1;
+}
+
+.prompt-metric {
+  border-left: 3px solid #06b6d4;
+}
+
+.completion-metric {
+  border-left: 3px solid #8b5cf6;
+}
+
+.efficiency-metric {
+  border-left: 3px solid #10b981;
+}
+
+/* Ratio Bar */
+.token-ratio-bar-wrap {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.ratio-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.label-prompt {
+  color: #0891b2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label-completion {
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.prompt-dot {
+  background: #06b6d4;
+}
+
+.completion-dot {
+  background: #8b5cf6;
+}
+
+.ratio-track {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.ratio-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.prompt-segment {
+  background: linear-gradient(90deg, #06b6d4, #0891b2);
+}
+
+.completion-segment {
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+}
+
+/* Tier Badges & Indicator Dots */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.tier-light {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+.tier-light .badge-dot {
+  background: #10b981;
+}
+
+.tier-moderate {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+.tier-moderate .badge-dot {
+  background: #3b82f6;
+}
+
+.tier-heavy {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+.tier-heavy .badge-dot {
+  background: #a855f7;
+}
+
+.tier-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.tier-indicator-dot.tier-light {
+  background: #10b981;
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+}
+
+.tier-indicator-dot.tier-moderate {
+  background: #3b82f6;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+}
+
+.tier-indicator-dot.tier-heavy {
+  background: #a855f7;
+  box-shadow: 0 0 4px rgba(168, 85, 247, 0.4);
+}
+
+/* Message Token Indicator Footers */
+.msg-token-indicator {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  display: flex;
+  align-items: center;
+}
+
+.indicator-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.indicator-chip i {
+  font-size: 11px;
+}
+
+.chip-total {
+  font-weight: 700;
+}
+
+.chip-split {
+  opacity: 0.85;
+  font-size: 10px;
 }

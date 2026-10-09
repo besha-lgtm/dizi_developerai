@@ -18,8 +18,51 @@ export class DeveloperaiComponent implements OnInit {
   isSessionsLoading: boolean = false;
   isHistorySidebarOpen: boolean = true;
   errorMessage: string | null = null;
+  showTokenSummary: boolean = false;
 
   constructor(private chatService: ChatService) {}
+
+  toggleTokenSummary(): void {
+    this.showTokenSummary = !this.showTokenSummary;
+  }
+
+  getTokenTierClass(tokens?: number): string {
+    const t = tokens || 0;
+    if (t >= 3000) return 'tier-heavy';
+    if (t >= 1000) return 'tier-moderate';
+    return 'tier-light';
+  }
+
+  getTokenTierLabel(tokens?: number): string {
+    const t = tokens || 0;
+    if (t >= 3000) return 'Heavy Usage';
+    if (t >= 1000) return 'Moderate Usage';
+    return 'Light Usage';
+  }
+
+  getPromptPercentage(): number {
+    const total = this.activeSession?.token_usage?.total_tokens || 0;
+    if (total === 0) return 0;
+    const prompt = this.activeSession?.token_usage?.prompt_tokens || 0;
+    return Math.round((prompt / total) * 100);
+  }
+
+  getCompletionPercentage(): number {
+    const total = this.activeSession?.token_usage?.total_tokens || 0;
+    if (total === 0) return 0;
+    const completion = this.activeSession?.token_usage?.completion_tokens || 0;
+    return Math.round((completion / total) * 100);
+  }
+
+  getUserQueryCount(): number {
+    return (this.messages || []).filter(m => m.role === 'user').length;
+  }
+
+  getAvgTokensPerQuery(): number {
+    const queries = this.getUserQueryCount();
+    const total = this.activeSession?.token_usage?.total_tokens || 0;
+    return queries > 0 ? Math.round(total / queries) : total;
+  }
 
   ngOnInit(): void {
     this.loadSessionsList(true);
