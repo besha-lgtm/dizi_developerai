@@ -437,30 +437,28 @@ def help_with_code(request: CodeHelpRequest):
             TASK_RULES["Other"]
         )
 
+        
         prompt = f"""
 You are an AI Development Assistant.
 
-Category:
-{category}
+Category: {category}
+Task Type: {task_type}
 
-Task Type:
-{task_type}
-
-Category-specific instructions:
 {category_rules}
-
-Task-specific instructions:
 {task_rules}
 
-User Requirement:
-{request.requirement}
+Requirement: {request.requirement}
 
-Provide:
-1. A clear solution
-2. Working code or the required technical solution
-3. A short explanation
-4. Important considerations if applicable
+Response rules: Be direct and concise. Follow the selected
+category and task type. Provide complete code when needed,
+with only essential explanations. Avoid repetition,
+lengthy introductions, unrelated details, and alternatives.
+Use Markdown for readability.
+
+Keep the response as short as possible without omitting
+necessary code, explanations, or correctness-critical details.
 """
+
 
         # Step 4: Send prompt to Gemini (with usage tracking)
         response_text, usage = generate_response_with_usage(prompt)
